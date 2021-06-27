@@ -52,9 +52,9 @@ var color = d3.scale.linear()
   .range(['#fff', '#409A99']);
 
 var projection = d3.geo.mercator()
-  .scale(1500)
+  .scale(2500)
   // Center the Map in Colombia
-  .center([-74, 4.5])
+  .center([-84, -2.5])
   .translate([width / 2, height / 2]);
 
 var path = d3.geo.path()
@@ -105,12 +105,15 @@ d3.json('https://raw.githubusercontent.com/fabiobazurto/maps-d3-ec/main/provinci
       .attr('vector-effect', 'non-scaling-stroke')
       .style('fill', fillFn)
       .on('mouseover', mouseover)
-      .on('mouseout', mouseout);
+      .on('mouseout', mouseout)
+      .on('click', clicked);
+;
 });
 
 // Get province name
 function nameFn(d){
-  return d && d.properties ? d.properties.NOMBRE_DPT : null;
+console.log(d.properties);
+  return d && d.properties ? d.properties.dpa_despro : null;
 }
 
 // Get province name length
@@ -149,6 +152,34 @@ function mouseout(d){
 
   // Clear province name
   bigText.text('');
+}
+
+// When clicked, zoom in
+function clicked(d) {
+  var x, y, k;
+
+  // Compute centroid of the selected path
+  if (d && centered !== d) {
+    var centroid = path.centroid(d);
+    x = centroid[0];
+    y = centroid[1];
+    k = 4;
+    centered = d;
+  } else {
+    x = width / 2;
+    y = height / 2;
+    k = 1;
+    centered = null;
+  }
+
+  // Highlight the clicked province
+  mapLayer.selectAll('path')
+    .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);});
+
+  // Zoom
+  g.transition()
+    .duration(750)
+    .attr('transform', 'translate(' + width / 2 + ',' + height / 2 + ')scale(' + k + ')translate(' + -x + ',' + -y + ')');
 }
 
 
